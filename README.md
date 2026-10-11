@@ -18,7 +18,7 @@ Pick a city and a date. Air Detective compares that day with the previous day, t
 - **Explainable by design:** every finding is a rule with visible numbers, with no black box.
 
 ## Architecture
-![Architecture](docs/architecture.png)
+
 
 | AWS service | Role |
 |---|---|
