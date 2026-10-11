@@ -16,6 +16,7 @@
   .card { background:#fff; border-radius:10px; padding:18px; margin-bottom:16px; box-shadow:0 1px 4px rgba(0,0,0,.08); }
   .badge { display:inline-block; padding:4px 10px; border-radius:20px; font-weight:600; color:#fff; }
   .bad { background:#c0392b; } .ok { background:#27ae60; }
+  .warn { background:#e67e22; }
   .note { font-size:13px; color:#5b6b79; }
   #error { color:#c0392b; }
 </style>
@@ -37,6 +38,8 @@
     <span id="badge" class="badge"></span>
     <h3>Evidence</h3>
     <ul id="evidence"></ul>
+      <h3>Where: PM2.5 on this date (µg/m³)</h3>
+    <ul id="areas"></ul>
     <p class="note">These findings are correlations that coincided with the change, not proven causes. Data: Open-Meteo (model-based estimates).</p>
   </div>
   <div id="chartCard" class="card" hidden>
@@ -45,7 +48,7 @@
 </main>
 
 <script>
-const API_URL = "https://YOUR-API-ID.execute-api.ap-south-1.amazonaws.com"; // <- put your Invoke URL here
+const API_URL = "https://zmrp4vw8xb.execute-api.ap-south-1.amazonaws.com"; // <- put your Invoke URL here
 
 const d = new Date(); d.setDate(d.getDate() - 10);
 document.getElementById("date").value = d.toISOString().slice(0, 10);
@@ -72,11 +75,14 @@ document.getElementById("go").addEventListener("click", async () => {
 function show(r) {
   const pct = Math.round(((r.pm25 - r.baseline) / r.baseline) * 100);
   const dir = pct >= 0 ? "above" : "below";
-  document.getElementById("headline").textContent =
-    `${r.city}, ${r.date}: PM2.5 was ${r.pm25} µg/m³, ${Math.abs(pct)}% ${dir} the 28-day average (${r.baseline}).`;
+    document.getElementById("headline").textContent =
+    `${r.place || r.city}, ${r.date}: PM2.5 was ${r.pm25} µg/m³, ${Math.abs(pct)}% ${dir} the 28-day average (${r.baseline}).`;
   const badge = document.getElementById("badge");
-  badge.textContent = r.anomaly ? "Unusual change detected" : "Within normal range";
-  badge.className = "badge " + (r.anomaly ? "bad" : "ok");
+    const elevated = !r.anomaly && r.zscore >= 1;
+  badge.textContent = r.anomaly ? "Unusual change detected"
+                    : elevated ? "Elevated, within normal variation"
+                    : "Within normal range";
+  badge.className = "badge " + (r.anomaly ? "bad" : elevated ? "warn" : "ok");
 
   const ul = document.getElementById("evidence");
   ul.innerHTML = "";
@@ -84,6 +90,13 @@ function show(r) {
   items.forEach(t => { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); });
 
   const labels = Object.keys(r.series);
+    const al = document.getElementById("areas");
+  al.innerHTML = "";
+  Object.entries(r.areas || {}).forEach(([place, v]) => {
+    const li = document.createElement("li");
+    li.textContent = (place === "Centre" ? "City centre" : place + " (about 55 km)") + ": " + v;
+    al.appendChild(li);
+  });
   const values = Object.values(r.series);
   const colors = labels.map(l => l === r.date ? "#c0392b" : "#0b7a5c");
   const sizes = labels.map(l => l === r.date ? 8 : 3);
