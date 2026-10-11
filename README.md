@@ -3,8 +3,6 @@
 
 > Don't just see that the air got worse. Find out why.
 
-**Live demo:** [http://127.0.0.1:5500/frontend/index.html]
-
 ## Problem
 When air pollution rises, ordinary people can see the number but not the reason. Raw dashboards don't say what changed, where, or when.
 
